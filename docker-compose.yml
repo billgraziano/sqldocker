@@ -10,8 +10,11 @@ services:
       - MSSQL_PID=Developer
       - MSSQL_ENABLE_HADR=1
     ports:
-      - "64001:1433"
-      - "63001:63001"
+      - "64001:1433"   # sqlnode1 direct
+      - "63001:63001"  # AG Listener (172.20.0.20)
+    user: root          # required so NET_ADMIN caps work for ip/iptables
+    cap_add:
+      - NET_ADMIN
     volumes:
       - sql1_data:/var/opt/mssql
       - ./certs:/certs
@@ -20,7 +23,8 @@ services:
 #     command: /bin/bash /usr/src/app/init-primary.sh
     command: /bin/bash -c "/usr/src/app/init-primary.sh & /opt/mssql/bin/sqlservr"
     networks:
-      - sql_ag_net
+      sql_ag_net:
+        ipv4_address: 172.20.0.10
 
 
   sqlnode2:
@@ -34,8 +38,7 @@ services:
       - MSSQL_PID=Developer
       - MSSQL_ENABLE_HADR=1
     ports:
-      - "64002:1433"
-      - "63002:63001"
+      - "64002:1433"   # sqlnode2 direct
     volumes:
       - sql2_data:/var/opt/mssql
       - ./certs:/certs
@@ -43,11 +46,15 @@ services:
 #      - ./join-ag.sql:/usr/src/app/join-ag.sql
     command: /bin/bash -c "/usr/src/app/init-secondary.sh & /opt/mssql/bin/sqlservr"
     networks:
-      - sql_ag_net
+      sql_ag_net:
+        ipv4_address: 172.20.0.11
 
 
 networks:
   sql_ag_net:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
 
 volumes:
   sql1_data:

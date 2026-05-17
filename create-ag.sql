@@ -52,7 +52,7 @@ GO
 -- 4. Create the Listener
 ALTER AVAILABILITY GROUP [MyAG]
 ADD LISTENER N'MyAGListener' ( 
-    WITH IP ((N'0.0.0.0', N'255.255.255.0')), PORT = 63001
+    WITH IP ((N'172.20.0.20', N'255.255.255.0')), PORT = 63001
 );
 GO
 

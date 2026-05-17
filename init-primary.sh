@@ -10,6 +10,33 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S.%2N') **init-primary.sh**  $1"
 }
 
+log "Installing iproute2 and iptables if missing..."
+PKGS=()
+command -v ip       &>/dev/null || PKGS+=(iproute2)
+command -v iptables &>/dev/null || PKGS+=(iptables)
+if [[ ${#PKGS[@]} -gt 0 ]]; then
+    log "Installing: ${PKGS[*]}"
+    apt-get update -qq && apt-get install -y -qq "${PKGS[@]}"
+fi
+
+log "Adding secondary IP 172.20.0.20 for AG Listener..."
+if ip addr add 172.20.0.20/24 dev eth0; then
+    log "Secondary IP 172.20.0.20 added successfully"
+else
+    log "ERROR: Failed to add secondary IP - is user: root and cap_add: NET_ADMIN set?"
+    exit 1
+fi
+
+# Rewrite destination IP for port 63001: 172.20.0.10 -> 172.20.0.20 (no port change)
+# This makes sys.dm_exec_connections show 172.20.0.20 for listener connections
+if iptables -t nat -A PREROUTING -p tcp -d 172.20.0.10 --dport 63001 -j DNAT --to-destination 172.20.0.20:63001; then
+    log "iptables DNAT rule added: 172.20.0.10:63001 -> 172.20.0.20:63001"
+else
+    log "ERROR: Failed to add iptables rule"
+    exit 1
+fi
+log "Network setup complete. Listener will bind to 172.20.0.20:63001"
+
 log "Waiting for SQL Server on sqlnode1 to be ready..."
 # uname -r
 # uname -a 
