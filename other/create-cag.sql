@@ -1,0 +1,29 @@
+-- 3. Create a Contained Availability Group
+-- Run on the sqlnode1
+CREATE AVAILABILITY GROUP [CAG]
+WITH (
+    CLUSTER_TYPE = NONE,
+    CONTAINED
+)
+FOR REPLICA ON
+    N'sqlnode1' WITH (
+        ENDPOINT_URL = N'tcp://sqlnode1:5022',
+        AVAILABILITY_MODE = SYNCHRONOUS_COMMIT,
+        FAILOVER_MODE = MANUAL,
+        SEEDING_MODE = AUTOMATIC,
+        SECONDARY_ROLE (ALLOW_CONNECTIONS = ALL)
+    ),
+    N'sqlnode2' WITH (
+        ENDPOINT_URL = N'tcp://sqlnode2:5022',
+        AVAILABILITY_MODE = SYNCHRONOUS_COMMIT,
+        FAILOVER_MODE = MANUAL,
+        SEEDING_MODE = AUTOMATIC,
+        SECONDARY_ROLE (ALLOW_CONNECTIONS = ALL)
+    );
+GO
+-- On sqlnode2 -- it took 30 seconds on my test box
+
+ALTER AVAILABILITY GROUP [CAG] JOIN WITH (CLUSTER_TYPE = NONE);
+GO
+ALTER AVAILABILITY GROUP [CAG] GRANT CREATE ANY DATABASE;
+GO

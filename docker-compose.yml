@@ -1,0 +1,54 @@
+services:
+  sqlnode1:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: sqlnode1
+    hostname: sqlnode1
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=P@ssword1
+      - MSSQL_PID=Developer
+      - MSSQL_ENABLE_HADR=1
+    ports:
+      - "64001:1433"
+      - "63001:63001"
+    volumes:
+      - sql1_data:/var/opt/mssql
+      - ./certs:/certs
+      - ./init-primary.sh:/usr/src/app/init-primary.sh
+      - ./create-ag.sql:/usr/src/app/create-ag.sql
+#     command: /bin/bash /usr/src/app/init-primary.sh
+    command: /bin/bash -c "/usr/src/app/init-primary.sh & /opt/mssql/bin/sqlservr"
+    networks:
+      - sql_ag_net
+
+
+  sqlnode2:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: sqlnode2
+    hostname: sqlnode2
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=P@ssword1
+      - MSSQL_PID=Developer
+      - MSSQL_ENABLE_HADR=1
+    ports:
+      - "64002:1433"
+      - "63002:63001"
+    volumes:
+      - sql2_data:/var/opt/mssql
+      - ./certs:/certs
+      - ./init-secondary.sh:/usr/src/app/init-secondary.sh
+#      - ./join-ag.sql:/usr/src/app/join-ag.sql
+    command: /bin/bash -c "/usr/src/app/init-secondary.sh & /opt/mssql/bin/sqlservr"
+    networks:
+      - sql_ag_net
+
+
+networks:
+  sql_ag_net:
+
+volumes:
+  sql1_data:
+  sql2_data:

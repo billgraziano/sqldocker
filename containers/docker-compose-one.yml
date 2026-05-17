@@ -1,0 +1,10 @@
+services:
+  sql-test:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: sql-test
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=P@ssword1
+    ports:
+      - "64003:1433"
